@@ -1,0 +1,135 @@
+-- Table: public.students
+
+-- DROP TABLE IF EXISTS public.students;
+
+CREATE TABLE IF NOT EXISTS public.students
+(
+    id integer NOT NULL DEFAULT nextval('students_id_seq'::regclass),
+    name character varying(100) COLLATE pg_catalog."default",
+    age integer,
+    email character varying(100) COLLATE pg_catalog."default",
+    CONSTRAINT students_pkey PRIMARY KEY (id),
+    CONSTRAINT students_email_key UNIQUE (email)
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.students
+    OWNER to postgres;
+
+
+-- FUNCTION: public.addstudent(character varying, integer, character varying)
+
+-- DROP FUNCTION IF EXISTS public.addstudent(character varying, integer, character varying);
+
+CREATE OR REPLACE FUNCTION public.addstudent(
+	student_name character varying,
+	student_age integer,
+	student_email character varying)
+    RETURNS integer
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+AS $BODY$
+DECLARE 
+    new_id INT;
+BEGIN
+    INSERT INTO Students (Name, Age, Email) 
+    VALUES (student_name, student_age, student_email) 
+    RETURNING Id INTO new_id;
+
+    RETURN new_id;
+END;
+$BODY$;
+
+ALTER FUNCTION public.addstudent(character varying, integer, character varying)
+    OWNER TO postgres;
+
+
+-- FUNCTION: public.deletestudent(integer)
+
+-- DROP FUNCTION IF EXISTS public.deletestudent(integer);
+
+CREATE OR REPLACE FUNCTION public.deletestudent(
+	student_id integer)
+    RETURNS void
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+AS $BODY$
+BEGIN
+    DELETE FROM Students WHERE Id = student_id;
+END;
+$BODY$;
+
+ALTER FUNCTION public.deletestudent(integer)
+    OWNER TO postgres;
+
+
+-- FUNCTION: public.getstudentbyid(integer)
+
+-- DROP FUNCTION IF EXISTS public.getstudentbyid(integer);
+
+CREATE OR REPLACE FUNCTION public.getstudentbyid(
+	student_id integer)
+    RETURNS TABLE(id integer, name character varying, age integer, email character varying) 
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
+BEGIN
+    RETURN QUERY 
+    SELECT s.Id, s.Name, s.Age, s.Email FROM Students s WHERE s.Id = student_id;
+END;
+$BODY$;
+
+ALTER FUNCTION public.getstudentbyid(integer)
+    OWNER TO postgres;
+
+
+-- FUNCTION: public.getstudents()
+
+-- DROP FUNCTION IF EXISTS public.getstudents();
+
+CREATE OR REPLACE FUNCTION public.getstudents(
+	)
+    RETURNS TABLE(id integer, name character varying, age integer, email character varying) 
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
+BEGIN
+    RETURN QUERY SELECT * FROM Students;
+END;
+$BODY$;
+
+ALTER FUNCTION public.getstudents()
+    OWNER TO postgres;
+
+
+
+-- FUNCTION: public.updatestudent(integer, character varying, integer, character varying)
+
+-- DROP FUNCTION IF EXISTS public.updatestudent(integer, character varying, integer, character varying);
+
+CREATE OR REPLACE FUNCTION public.updatestudent(
+	student_id integer,
+	student_name character varying,
+	student_age integer,
+	student_email character varying)
+    RETURNS void
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+AS $BODY$
+BEGIN
+    UPDATE Students SET Name = student_name, Age = student_age, Email = student_email WHERE Id = student_id;
+END;
+$BODY$;
+
+ALTER FUNCTION public.updatestudent(integer, character varying, integer, character varying)
+    OWNER TO postgres;
